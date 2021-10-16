@@ -1,9 +1,12 @@
 package com.edu.service.impl;
 
+import java.util.Optional;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.edu.model.Cliente;
+import com.edu.model.Endereco;
 import com.edu.repository.ClienteRepository;
 import com.edu.repository.Enderecorepository;
 import com.edu.service.ClienteService;
@@ -25,31 +28,42 @@ public class ClientServiceImpl implements ClienteService {
 
 	@Override
 	public Iterable<Cliente> buscarTodos() {
-		// TODO Auto-generated method stub
-		return null;
+		return clienteRepository.findAll();
 	}
 
 	@Override
 	public Cliente buscarPorId(Long id) {
-		// TODO Auto-generated method stub
-		return null;
+		Optional<Cliente> cliente = clienteRepository.findById(id);
+		return cliente.get();
 	}
 
 	@Override
 	public void inserir(Cliente cliente) {
-		// TODO Auto-generated method stub
-
+		salvarClienteComCep(cliente);
 	}
 
 	@Override
 	public void atualizar(Long id, Cliente cliente) {
-		// TODO Auto-generated method stub
-
+		Optional<Cliente> clienteBd = clienteRepository.findById(id);
+		if (clienteBd.isPresent()) {
+			salvarClienteComCep(cliente);
+		}
 	}
 
 	@Override
 	public void deletar(Long id) {
-		// TODO Auto-generated method stub
+		clienteRepository.deleteById(id);
+	}
+	
 
+	private void salvarClienteComCep(Cliente cliente) {
+		String cep = cliente.getEndereco().getCep();
+		Endereco endereco = enderecoRepository.findById(cep).orElseGet(() -> {
+			Endereco novoEndereco = viaCepService.consultCep(cep);
+			enderecoRepository.save(novoEndereco);
+			return novoEndereco;
+		});
+		cliente.setEndereco(endereco);
+		clienteRepository.save(cliente);
 	}
 }
